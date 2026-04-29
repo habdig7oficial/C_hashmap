@@ -63,7 +63,7 @@ void *search(Hashmap *ctx, void *key){
   Node *node = ctx -> hashmap[ctx -> hash(ctx, key)];
   while(node != NULL){
     printf("addr %p\n", node);
-    //ctx -> print_key(((Pair *)node -> ptr_value) -> key);
+    ctx -> print_key(((Pair *)node -> ptr_value) -> key);
     if(ctx -> comparator(((Pair *)node -> ptr_value) -> key, key))
       return ((Pair *)node -> ptr_value) -> val;
     node = node -> next;
