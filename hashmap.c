@@ -8,7 +8,7 @@ struct Hashmap;
 typedef int (*hash_func)(struct Hashmap *, void *);
 typedef void (*insert_func)(struct Hashmap *, void *, void *, size_t, size_t);
 typedef void (*printer_func)(struct Hashmap *);
-typedef void (*printer_func)(struct Hashmap *);
+typedef void (*printer_impl)(void *);
 
 typedef struct Hashmap{
   Node **hashmap;
@@ -18,7 +18,8 @@ typedef struct Hashmap{
   insert_func insert;
 
   printer_func print;
-  printer impl_printer;
+  printer_impl print_key;
+  printer_impl print_val;
 } Hashmap;
 
 struct Pair{
@@ -41,11 +42,12 @@ void insert_hashmap(Hashmap *ctx, void *key, void *value, size_t size_key, size_
   pair -> val = save_val;
 
   printf("Pair %p\n", pair);
-  //printf("Pair key %s\n",(char *)pair -> key);
-  //printf("Pair val %s\n", (char *)pair -> val);
+  ctx -> print_key(pair -> key);
+  ctx -> print_val(pair -> val);
   
   //ctx -> hashmap[pos] = prepend(ctx -> hashmap[pos], value, ctx -> size_val);
   ctx -> hashmap[pos] = prepend_ptr(ctx -> hashmap[pos], pair);
+  printf("PAST %s\n", (char *)((struct Pair *)ctx -> hashmap[pos] -> ptr_value) -> key);
   //print_list(ctx -> hashmap[pos], int_printer);
 }
 
@@ -53,7 +55,7 @@ void insert_hashmap(Hashmap *ctx, void *key, void *value, size_t size_key, size_
 void printer_hashmap(Hashmap *ctx){
   for(int i = 1; i < ctx -> buckets; i++){
     if(ctx -> hashmap[i] -> ptr_value != NULL)
-      printf("%s\n", (char*)((struct Pair *)ctx -> hashmap[i] -> ptr_value) -> key);
+      printf("Hash %p\n", ((struct Pair *)ctx -> hashmap[i] -> ptr_value) -> key);
     //print_list(ctx -> hashmap[i], ctx -> impl_printer);
   }
 }
@@ -63,7 +65,7 @@ void impl_printer_str(void *ptr){
     printf("%s", (char *)ptr);
 }
 
-Hashmap *hashmap_init(int m, hash_func h, printer impl_printer){
+Hashmap *hashmap_init(int m, hash_func h, printer_impl printer_key, printer_impl printer_val){
   Hashmap *hashmap = (Hashmap *)malloc(sizeof(Hashmap));
   hashmap -> buckets = m;
 
@@ -72,7 +74,8 @@ Hashmap *hashmap_init(int m, hash_func h, printer impl_printer){
   hashmap -> comparator = h;
   hashmap -> insert = insert_hashmap;
 
-  hashmap -> impl_printer = impl_printer;
+  hashmap -> print_key = printer_key;
+  hashmap -> print_val = printer_val;
   hashmap -> print = printer_hashmap;
   
   for(int i = 0; i < m; i++){
@@ -101,10 +104,14 @@ int comparator_int(Hashmap *ctx, void *key){
   return *(int *)key / ctx -> buckets;
 }
 
+void print_str(void *ptr){
+  printf("%s ", (char *)ptr);
+}
+
 
 int main(){
 
-  Hashmap *hashmap = hashmap_init(7, comparator, str_printer);
+  Hashmap *hashmap = hashmap_init(7, comparator, print_str, print_str);
 
   char key1[] = "hello";
   char val1[] = "world";
