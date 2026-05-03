@@ -13,7 +13,9 @@ typedef struct Pair{
 typedef int (*hash_func)(struct Hashmap *, void *);
 typedef void (*insert_func)(struct Hashmap *, void *, void *, size_t, size_t);
 typedef void* (*search_func)(struct Hashmap *, void *);
+typedef void (*delete_func)(struct Hashmap *, void *);
 typedef bool (*comparator)(void *, void *);
+typedef void* (*free_func)(struct Hashmap *);
 
 typedef void (*printer_func)(struct Hashmap *);
 typedef void (*printer_impl)(void *);
@@ -25,6 +27,8 @@ typedef struct Hashmap{
   hash_func hash;
   insert_func insert;
   search_func search;
+  delete_func delete;
+  free_func free;
 
   comparator comparator;
 
@@ -54,16 +58,15 @@ void insert_hashmap(Hashmap *ctx, void *key, void *value, size_t size_key, size_
 
   printf("Pair %p\n", pair);
 
+  
   ctx -> hashmap[pos] = prepend_ptr(ctx -> hashmap[pos], pair);
-
 
 }
 
 void *search(Hashmap *ctx, void *key){
   Node *node = ctx -> hashmap[ctx -> hash(ctx, key)];
   while(node != NULL){
-    printf("addr %p\n", node);
-    ctx -> print_key(((Pair *)node -> ptr_value) -> key);
+    //ctx -> print_key(((Pair *)node -> ptr_value) -> key);
     if(ctx -> comparator(((Pair *)node -> ptr_value) -> key, key))
       return ((Pair *)node -> ptr_value) -> val;
     node = node -> next;
@@ -71,11 +74,60 @@ void *search(Hashmap *ctx, void *key){
   return NULL;
 }
 
+
+void delete(Hashmap *ctx, void *key){
+  Node *node = ctx -> hashmap[ctx -> hash(ctx, key)];
+  Node *aux = NULL;
+  while(node != NULL){
+    //ctx -> print_key(((Pair *)node -> ptr_value) -> key);
+    if(ctx -> comparator(((Pair *)node -> ptr_value) -> key, key))
+      break;
+    aux = node;
+    node = node -> next;
+  }
+
+  if(aux == NULL)
+    ctx -> hashmap[ctx -> hash(ctx, key)] = node -> next;
+  else
+    aux -> next = node -> next;
+  
+  free(((Pair *)node -> ptr_value) -> key);
+  free(((Pair *)node -> ptr_value) -> val);
+  free(node -> ptr_value);
+  free(node);
+  
+  return;
+}
+
+void *free_hashmap(Hashmap *ctx){
+  for(int i = 0; i < ctx -> buckets; i++){
+    Node *node = ctx -> hashmap[i];
+
+    while(node != NULL){
+      Node *aux = node -> next;
+
+      free(((Pair *)node -> ptr_value) -> key);
+      free(((Pair *)node -> ptr_value) -> val);
+      free(node -> ptr_value);
+      free(node);
+      
+      node = aux;
+    }
+  }
+  free(ctx -> hashmap);
+  free(ctx);
+  return NULL;
+}
+
 void printer_hashmap(Hashmap *ctx){
  for(int i = 0; i < ctx -> buckets; i++){
+    printf("\nBucket %d\n", i);
     if(ctx -> hashmap[i] != NULL){
+      printf("\t{ ");
       ctx -> print_key(((Pair *)ctx -> hashmap[i] -> ptr_value) -> key);
+      printf(": ");
       ctx -> print_val(((Pair *)ctx -> hashmap[i] -> ptr_value) -> val);
+      printf("}, ");
     }
   }
 }
@@ -99,6 +151,8 @@ Hashmap *hashmap_init(int m, hash_func h, comparator comparator, printer_impl pr
 
   hashmap -> print_key = printer_key;
   hashmap -> search = search;
+  hashmap -> delete = delete;
+  hashmap -> free = free_hashmap;
   hashmap -> print_val = printer_val;
   hashmap -> print = printer_hashmap;
   

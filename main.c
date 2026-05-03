@@ -34,10 +34,17 @@ int main(){
   char key1[] = "hello";
   char val1[] = "world";
 
-  int z = 41;
-  int t = 42;
+  char key2[] = "hallo";
+  char val2[] = "welt";
+
+  char key3[] = "ola";
+  char val3[] = "mundo";
+
   
   hashmap -> insert(hashmap, (void *)key1, (void *)val1, strlen(key1), strlen(val1));
+  hashmap -> insert(hashmap, (void *)key2, (void *)val2, strlen(key2), strlen(val2));
+  hashmap -> insert(hashmap, (void *)key3, (void *)val3, strlen(key3), strlen(val3));
+
 
   hashmap -> print(hashmap);
 
@@ -46,7 +53,35 @@ int main(){
   if(res == NULL)
     printf("Value not found");
   else
-    printf("Found Value %s", (char *)res);
+    printf("\nFound Value %s\n", (char *)res);
+
+  void *res2 = hashmap -> search(hashmap, (void *)val1);
+  
+  if(res2 == NULL)
+    printf("Value not found");
+  else
+    printf("Found Value %s\n\n", (char *)res2);
+
+  hashmap -> delete(hashmap, (void *)key1);
+
+  hashmap -> print(hashmap);
+
+  hashmap -> delete(hashmap, (void *)key2);
+
+  hashmap -> print(hashmap);
+
+  //reinsert 1
+  hashmap -> insert(hashmap, (void *)key1, (void *)val1, strlen(key1), strlen(val1));
+  hashmap -> insert(hashmap, (void *)key3, (void *)val3, strlen(key3), strlen(val3));
+
+  hashmap = hashmap -> free(hashmap);
+
+  if(hashmap == NULL)
+    printf("Hashmap deallocated");
+  else
+    printf("Failed to free hashmap");
+  
+
   /*
   t++;
   z += 3;
