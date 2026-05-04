@@ -1,9 +1,10 @@
-
+// Compile with -lm flag for math.h
+// gcc -lm main.c -o hashmap && ./hashmap
 #include "hashmap.h"
 #include "stdbool.h"
+#include "math.h"
 
-
-
+// Function Modified 
 int hash(Hashmap *ctx, void *key){
   char *str = (char *)key;
 
@@ -12,7 +13,16 @@ int hash(Hashmap *ctx, void *key){
     //printf("%c", str[i]);
     acc += (int) str[i];
   }
-  return acc % ctx -> buckets;
+
+  double int_part;
+  double double_part;
+
+  double_part = modf(acc * 0.6180, &int_part);
+  double hash = double_part * ctx -> buckets;
+
+  printf("Acc %f %f %f\n", double_part, int_part, hash);
+  
+  return (int) round(hash);
 }
 
 bool comparable_str(void *ptr1, void *ptr2){
