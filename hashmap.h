@@ -21,7 +21,7 @@ typedef void (*printer_func)(struct Hashmap *);
 typedef void (*printer_impl)(void *);
 
 typedef struct Hashmap{
-  Node **hashmap;
+  Pair **hashmap;
   int buckets;
   
   hash_func hash;
@@ -58,60 +58,59 @@ void insert_hashmap(Hashmap *ctx, void *key, void *value, size_t size_key, size_
 
   printf("Pair %p\n", pair);
 
-  
-  ctx -> hashmap[pos] = prepend_ptr(ctx -> hashmap[pos], pair);
+  int i = pos;
+  while(i < ctx -> buckets && ctx -> hashmap[i] != NULL)
+    i++;
+  ctx -> hashmap[i] = pair;
 
 }
 
 void *search(Hashmap *ctx, void *key){
-  Node *node = ctx -> hashmap[ctx -> hash(ctx, key)];
-  while(node != NULL){
+  int hash = ctx -> hash(ctx, key);
+  Pair *node = ctx -> hashmap[hash];
+  int i;
+  for(i = 0; i < ctx -> buckets && node != NULL; i++){
     //ctx -> print_key(((Pair *)node -> ptr_value) -> key);
-    if(ctx -> comparator(((Pair *)node -> ptr_value) -> key, key))
-      return ((Pair *)node -> ptr_value) -> val;
-    node = node -> next;
+    if(ctx -> comparator(node -> key, key)){
+      printf("\nSought %d times\n", i);
+      return node -> val;
+    }
+    node = ctx -> hashmap[hash + i];
   }
+
   return NULL;
 }
 
-
 void delete(Hashmap *ctx, void *key){
-  Node *node = ctx -> hashmap[ctx -> hash(ctx, key)];
-  Node *aux = NULL;
-  while(node != NULL){
+  int hash = ctx -> hash(ctx, key);
+  Pair *node = ctx -> hashmap[hash];
+
+  int i;
+  for(i = 0; i < ctx -> buckets && node != NULL; i++){
     //ctx -> print_key(((Pair *)node -> ptr_value) -> key);
-    if(ctx -> comparator(((Pair *)node -> ptr_value) -> key, key))
+    if(ctx -> comparator(node -> key, key))
       break;
-    aux = node;
-    node = node -> next;
+    node = ctx -> hashmap[hash + i];
   }
 
-  if(aux == NULL)
-    ctx -> hashmap[ctx -> hash(ctx, key)] = node -> next;
-  else
-    aux -> next = node -> next;
+
+  ctx -> print_key(node -> key);
   
-  free(((Pair *)node -> ptr_value) -> key);
-  free(((Pair *)node -> ptr_value) -> val);
-  free(node -> ptr_value);
+  free(node -> key);
+  free(node -> val);
+  
   free(node);
-  
+  ctx -> hashmap[hash + i] = NULL;
   return;
 }
 
+
 void *free_hashmap(Hashmap *ctx){
   for(int i = 0; i < ctx -> buckets; i++){
-    Node *node = ctx -> hashmap[i];
-
-    while(node != NULL){
-      Node *aux = node -> next;
-
-      free(((Pair *)node -> ptr_value) -> key);
-      free(((Pair *)node -> ptr_value) -> val);
-      free(node -> ptr_value);
-      free(node);
-      
-      node = aux;
+    if(ctx -> hashmap[i] != NULL){
+      free(ctx -> hashmap[i] -> key);
+      free(ctx -> hashmap[i] -> val);
+      free(ctx -> hashmap[i]);
     }
   }
   free(ctx -> hashmap);
@@ -124,9 +123,9 @@ void printer_hashmap(Hashmap *ctx){
     printf("\nBucket %d\n", i);
     if(ctx -> hashmap[i] != NULL){
       printf("\t{ ");
-      ctx -> print_key(((Pair *)ctx -> hashmap[i] -> ptr_value) -> key);
+      ctx -> print_key(ctx -> hashmap[i]  -> key);
       printf(": ");
-      ctx -> print_val(((Pair *)ctx -> hashmap[i] -> ptr_value) -> val);
+      ctx -> print_val(ctx -> hashmap[i] -> val);
       printf("}, ");
     }
   }
@@ -138,23 +137,25 @@ void impl_printer_str(void *ptr){
 }
 
 
-
 Hashmap *hashmap_init(int m, hash_func h, comparator comparator, printer_impl printer_key, printer_impl printer_val){
   Hashmap *hashmap = (Hashmap *)malloc(sizeof(Hashmap));
   hashmap -> buckets = m;
 
-  hashmap -> hashmap = (Node **)malloc(sizeof(Node *) * m);
+  hashmap -> hashmap = (Pair **)malloc(sizeof(Pair *) * m);
 
   hashmap -> hash = h;
   hashmap -> insert = insert_hashmap;
   hashmap -> comparator = comparator;
-
+  
   hashmap -> print_key = printer_key;
-  hashmap -> search = search;
-  hashmap -> delete = delete;
-  hashmap -> free = free_hashmap;
   hashmap -> print_val = printer_val;
   hashmap -> print = printer_hashmap;
+  hashmap -> search = search;
+  
+  hashmap -> delete = delete;
+  hashmap -> free = free_hashmap;
+
+
   
   for(int i = 0; i < m; i++){
     ///hashmap -> hashmap[i] = (Node *) malloc(sizeof(Node));
@@ -166,5 +167,4 @@ Hashmap *hashmap_init(int m, hash_func h, comparator comparator, printer_impl pr
   
   return hashmap;
 }
-
 

@@ -57,8 +57,8 @@ int main(){
 
 
   hashmap -> print(hashmap);
-
-  void *res = hashmap -> search(hashmap, (void *)key1);
+  
+  void *res = hashmap -> search(hashmap, (void *)key3);
 
   if(res == NULL)
     printf("Value not found");
@@ -72,35 +72,25 @@ int main(){
   else
     printf("Found Value %s\n\n", (char *)res2);
 
+  
   hashmap -> delete(hashmap, (void *)key1);
 
   hashmap -> print(hashmap);
-
+  
   hashmap -> delete(hashmap, (void *)key2);
 
   hashmap -> print(hashmap);
-
+  
   //reinsert 1
   hashmap -> insert(hashmap, (void *)key1, (void *)val1, strlen(key1), strlen(val1));
   hashmap -> insert(hashmap, (void *)key3, (void *)val3, strlen(key3), strlen(val3));
-
+  
   hashmap = hashmap -> free(hashmap);
 
   if(hashmap == NULL)
     printf("Hashmap deallocated");
   else
     printf("Failed to free hashmap");
-  
-
-  /*
-  t++;
-  z += 3;
-
-  hashmap -> insert(hashmap, (void *)&z, (void *)&t);
-  hashmap -> print(hashmap);
-   */
-  
-  //hashmap_insert(hashmap, (void *)key1, (void *) val1, comparator);
   
   return 0;
 }
