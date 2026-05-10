@@ -5,7 +5,7 @@
 #include "math.h"
 
 // Function Modified 
-int hash2(Hashmap *ctx, void *key){
+int hash(Hashmap *ctx, void *key){
   char *str = (char *)key;
 
   int acc = 0;
