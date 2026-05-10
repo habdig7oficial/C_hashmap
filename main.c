@@ -5,7 +5,7 @@
 #include "math.h"
 
 // Function Modified 
-int hash(Hashmap *ctx, void *key){
+int hash1(Hashmap *ctx, void *key){
   char *str = (char *)key;
 
   int acc = 0;
@@ -23,6 +23,22 @@ int hash(Hashmap *ctx, void *key){
   printf("Acc %f %f %f\n", double_part, int_part, hash);
   
   return (int) round(hash);
+}
+
+
+int hash2(Hashmap *ctx, void *key){
+  char *str = (char *)key;
+
+  int acc = 0;
+  for(int i = 0; str[i] != '\0'; i++){
+    //printf("%c", str[i]);
+    acc += (int) str[i];
+  }
+  return acc % ctx -> buckets;
+}
+
+int hash(Hashmap *ctx, void *key){
+  return (hash1(ctx, key) + hash2(ctx, key)) % ctx -> buckets;
 }
 
 bool comparable_str(void *ptr1, void *ptr2){
@@ -57,7 +73,8 @@ int main(){
 
 
   hashmap -> print(hashmap);
-  
+
+
   void *res = hashmap -> search(hashmap, (void *)key3);
 
   if(res == NULL)
@@ -72,14 +89,16 @@ int main(){
   else
     printf("Found Value %s\n\n", (char *)res2);
 
+
   
   hashmap -> delete(hashmap, (void *)key1);
 
   hashmap -> print(hashmap);
   
-  hashmap -> delete(hashmap, (void *)key2);
+  hashmap -> delete(hashmap, (void *)key3);
 
-  hashmap -> print(hashmap);
+  //hashmap -> print(hashmap);
+
   
   //reinsert 1
   hashmap -> insert(hashmap, (void *)key1, (void *)val1, strlen(key1), strlen(val1));

@@ -92,8 +92,7 @@ void delete(Hashmap *ctx, void *key){
       break;
     node = ctx -> hashmap[hash + i];
   }
-
-
+  printf("GOT: %d ", hash + i);
   ctx -> print_key(node -> key);
   
   free(node -> key);
